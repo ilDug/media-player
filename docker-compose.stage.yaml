@@ -1,0 +1,124 @@
+# version: "3.9"
+
+# networks:
+#   default:
+#     name: traefik_net
+#     external: true
+
+# ##########################################
+# secrets:
+#   contact_addresses:
+#     file: secrets/contact_addresses
+#   mail_pw:
+#     file: secrets/mail_pw
+#   ig_user_id:
+#     file: secrets/ig_user_id
+
+# ##########################################
+# volumes:
+#   instagram_media:
+
+# ##########################################
+# services:
+
+#   web:
+#     container_name: simoweb
+#     image: nginx
+#     restart: unless-stopped
+#     environment:
+#       MODE: PRODUCTION
+#       TZ: Europe/Rome
+#     links:
+#       - php
+#     depends_on:
+#       - php
+#       - api
+#     volumes:
+#       - ./web:/app # cartella del sito
+#       - ./assets:/app/assets # collegamento ai file statici
+#       - instagram_media:/app/assets/images/ig/download
+#       - ./config/nginx:/etc/nginx/conf.d
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     networks:
+#       - default
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.simoweb.rule=Host(`simo.dag.lan`)"
+#       - "traefik.http.routers.simoweb.entrypoints=websecure"
+#       - "traefik.http.routers.simoweb.tls=true"
+#       # - "traefik.http.routers.simoweb.tls.certresolver=le"
+
+#   php:
+#     container_name: simophp  
+#     image: php:8-fpm-bullseye
+#     volumes:
+#       - ./web:/app
+#       - instagram_media:/app/assets/images/ig/download
+#       - ./config/php/php.ini:/usr/local/etc/php/php.ini
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     environment:
+#       MODE: PRODUCTION
+#       TZ: Europe/Rome
+#     networks:
+#       - default
+
+#   api:
+#     container_name: simoapi
+#     build:
+#       context: ./
+#       dockerfile: Dockerfile.prod-api
+#     restart: unless-stopped
+#     environment:
+#       MODE: DEVELOPMENT
+#       PYTHONUNBUFFERED: 1
+#       TZ: Europe/Rome
+#     volumes:
+#       # - ./api:/app # cartella dell'applicazione
+#       - ./assets:/app/assets # cartella per lo storage dei file statici
+#       - instagram_media:/app/assets/images/ig/download
+#       - ./secrets/ig_tokens:/app/lib/data/ig_tokens
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     networks:
+#       - default
+#     secrets:
+#       - mail_pw
+#       - contact_addresses
+#       - ig_user_id
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.simoapi.rule=Host(`simo.dag.lan`) && PathPrefix(`/api`) "
+#       - "traefik.http.routers.simoapi.entrypoints=websecure"
+#       - "traefik.http.routers.simoapi.tls=true"
+#       # - "traefik.http.routers.simoapi.tls.certresolver=le"
+#       - "traefik.http.routers.simoapi.middlewares=api_stripprefix@docker"
+#       - "traefik.http.middlewares.api_stripprefix.stripprefix.prefixes=/api"
+
+
+#   cron:
+#     container_name: simocron
+#     build:
+#       context: ./
+#       dockerfile: Dockerfile.prod-cron
+#     restart: unless-stopped
+#     environment:
+#       PYTHONUNBUFFERED: 1
+#       IG_CHECK_FREQ: 600 # secondi di frequenza del controllo del loop
+#       IG_RENEW_FREQ: 3600 # secondi di frequenza di rinnovo dei media e del token
+#       TZ: Europe/Rome
+#       MODE: DEVELOPMENT
+#     volumes:
+#       # - ./api:/app # cartella dell'applicazione
+#       - ./assets:/app/assets # cartella per lo storage dei file statici
+#       - instagram_media:/app/assets/images/ig/download
+#       - ./secrets/ig_tokens:/app/lib/data/ig_tokens
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     networks:
+#       - default
+#     secrets:
+#       - mail_pw
+#       - contact_addresses
+#       - ig_user_id
